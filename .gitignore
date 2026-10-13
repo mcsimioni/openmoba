@@ -1,0 +1,21 @@
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# OpenMoba local data & zip bundles
+*.zip
+.openmoba/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini

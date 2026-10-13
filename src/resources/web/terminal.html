@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="xterm.css" />
+  <script src="xterm.js"></script>
+  <script src="xterm-addon-fit.js"></script>
+  <script src="qwebchannel.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #121214;
+      overflow: hidden;
+    }
+    #terminal-container {
+      width: 100%;
+      height: 100%;
+      padding: 8px 10px;
+    }
+    /* Estilização suave para scrollbars dentro do xterm */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #52525b;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal-container"></div>
+  <script>
+    const term = new Terminal({
+      cursorBlink: true,
+      cursorStyle: 'bar',
+      cursorWidth: 2,
+      fontFamily: '"Cascadia Code", "Fira Code", Consolas, "JetBrains Mono", monospace',
+      fontSize: 14,
+      lineHeight: 1.25,
+      letterSpacing: 0.5,
+      theme: {
+        background: '#121214',
+        foreground: '#e4e4e7',
+        cursor: '#38bdf8',
+        cursorAccent: '#121214',
+        selectionBackground: 'rgba(56, 189, 248, 0.35)',
+        black: '#18181b',
+        red: '#f87171',
+        green: '#4ade80',
+        yellow: '#facc15',
+        blue: '#60a5fa',
+        magenta: '#c084fc',
+        cyan: '#38bdf8',
+        white: '#f4f4f5',
+        brightBlack: '#52525b',
+        brightRed: '#ef4444',
+        brightGreen: '#22c55e',
+        brightYellow: '#eab308',
+        brightBlue: '#3b8eea',
+        brightMagenta: '#a855f7',
+        brightCyan: '#06b6d4',
+        brightWhite: '#ffffff'
+      },
+      scrollback: 20000,
+      allowTransparency: false,
+      smoothScrollDuration: 100
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal-container'));
+    fitAddon.fit();
+
+    let backend = null;
+
+    function initChannel() {
+      if (typeof QWebChannel === 'undefined' || typeof qt === 'undefined' || !qt.webChannelTransport) {
+        setTimeout(initChannel, 50);
+        return;
+      }
+
+      new QWebChannel(qt.webChannelTransport, function (channel) {
+        backend = channel.objects.backend;
+        
+        term.onData(data => {
+          if (backend) {
+            backend.on_terminal_input(data);
+          }
+        });
+
+        term.onResize(size => {
+          if (backend) {
+            backend.on_terminal_resize(size.cols, size.rows);
+          }
+        });
+
+        window.addEventListener('resize', () => {
+          try { fitAddon.fit(); } catch(e) {}
+        });
+
+        if (backend) {
+          backend.on_terminal_ready(term.cols, term.rows);
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initChannel);
+    } else {
+      initChannel();
+    }
+
+    function writeToTerminal(data) {
+      term.write(data);
+    }
+
+    function clearTerminal() {
+      term.clear();
+    }
+
+    function fitTerminal() {
+      try {
+        fitAddon.fit();
+        if (backend) {
+          backend.on_terminal_resize(term.cols, term.rows);
+        }
+      } catch(e) {}
+    }
+  </script>
+</body>
+</html>

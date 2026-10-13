@@ -1,0 +1,4 @@
+PySide6>=6.5.0
+asyncssh>=2.14.0
+cryptography>=41.0.0
+qasync>=0.27.0
